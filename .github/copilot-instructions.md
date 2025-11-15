@@ -92,10 +92,11 @@ public class MyAlgorithm : QCAlgorithm
 
 ### Testing Philosophy
 - **Regression Tests**: Algorithms implement `IRegressionAlgorithmDefinition` with expected statistics
+  - Must define: `AlgorithmStatus`, `CanRunLocally`, `Languages`, `DataPoints`, `AlgorithmHistoryDataPoints`, `ExpectedStatistics`
+  - Example: `BasicTemplateFrameworkAlgorithm.cs` shows complete implementation pattern
 - **NUnit**: Standard test framework with `[TestFixture]` and `[Test]` attributes
 - Tests in `Tests/` mirror source structure (Tests/Engine/, Tests/Algorithm/, etc.)
 - Run tests: `dotnet test` or use VS Code Test Explorer
-- **Algorithm Statistics**: Regression algorithms define expected `DataPoints`, `AlgorithmHistoryDataPoints`, and performance metrics
 - **Test Categories**: `[Category("RegressionTests")]` for algorithm validation, `[Category("TravisExclude")]` for long-running tests
 
 ## Development Workflows
@@ -104,8 +105,11 @@ public class MyAlgorithm : QCAlgorithm
 ```bash
 dotnet build                                    # Standard build
 dotnet build --no-incremental                   # Clean rebuild
+dotnet clean                                    # Clean build artifacts
 ```
 Use VS Code tasks (Ctrl+Shift+B): `build`, `rebuild`, `clean`
+
+**Note**: Project targets .NET 9.0 framework.
 
 ### Running Algorithms
 1. Edit `Launcher/config.json`:
@@ -113,13 +117,15 @@ Use VS Code tasks (Ctrl+Shift+B): `build`, `rebuild`, `clean`
    - Set `algorithm-language` ("CSharp" or "Python")
    - Set `algorithm-location` (DLL path or .py file path)
 2. Run: `cd Launcher/bin/Debug && dotnet QuantConnect.Lean.Launcher.dll`
-3. Or use VS Code launch configuration (F5)
+3. Or use VS Code launch configuration (F5) with "Launch" profile
+4. Config changes require rebuild but not always a full rebuild
 
 ### Python Integration
 - Python algorithms inherit from `QCAlgorithm` in .py files
 - Algorithm.Python/ contains examples (use snake_case: `def initialize(self):`, `def on_data(self, data):`)
 - Requires Python 3.11, configured via `python-venv` in config.json
 - Python.NET bridges C# and Python runtime
+- Debug Python: Set `"debugging": true` and `"debugging-method": "DebugPy"` in config.json, then use "Attach to Python" launch configuration (port 5678)
 
 ### Docker Development
 - **lean CLI**: Recommended for algorithm development (`pip install lean`)
@@ -133,10 +139,17 @@ Use VS Code tasks (Ctrl+Shift+B): `build`, `rebuild`, `clean`
 - **Settings**: 4-space soft tabs, Microsoft C# formatting
 
 ### Brokerage Integration Patterns
-- **Environment Configuration**: `live-{brokerage}` environments in `config.json` (e.g., `live-interactive`, `live-zerodha`, `live-binance`)
+- **Environment Configuration**: `live-{brokerage}` environments in `config.json` (e.g., `live-interactive`, `live-zerodha`, `live-binance`, `live-kraken`, `live-oanda`)
 - **Handler Pattern**: Each brokerage implements `BrokerageTransactionHandler` and data queue handler
 - **Configuration Keys**: Brokerage-specific settings (API keys, accounts) in `config.json`
 - **Paper Trading**: `live-paper` environment uses `BacktestingTransactionHandler` for risk-free testing
+
+### ToolBox Utilities
+- **Data Management**: Command-line tools for downloading and converting market data
+- **Location**: `ToolBox/` directory with over 15 utilities
+- **Usage**: `--app=<tool-name>` is the required parameter (e.g., `--app=RandomDataGenerator`)
+- **Common Tools**: Data downloaders (GDAX, IB, Bitfinex), converters (AlgoSeek, Kaiko, QuantQuote), CoarseUniverseGenerator
+- Run: `dotnet QuantConnect.ToolBox.dll --app=<tool> --help` for tool-specific parameters
 
 ## Project Conventions
 
